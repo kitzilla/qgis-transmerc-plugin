@@ -1,10 +1,25 @@
 [general]
 name=TransMerc
-qgisMinimumVersion=1.7
-description=This is a plugin for transforming the projections of vector layers to Transverse Mercator (TM) accurately and universally. The default projection engine of QGIS uses approximated Gauss Kruger Formulae for TM transformation, whose accuracy go worse or raise exceptions when data sit far away from the prime meridian (central longitude). Because this plugin uses the original formulae for transformation, it can perform TM transformation for any combination of geographical data and projection parameters. 
-category=Vector
-version=version 0.1
+email=transmerc@zaq1.net
+author=Go Sato (Kitzilla)
+qgisMinimumVersion=2.0
+about=This is a plugin for transforming the projections of vector layers to Transverse Mercator (TM) accurately and universally. The default projection engine of QGIS uses approximated Gauss Kruger Formulae for TM transformation, whose accuracy go worse or raise exceptions at places far away from the prime meridian (central longitude). Because this plugin uses the original formulae for transformation, it can perform TM transformation for any combination of geographical data and projection parameters.
+description=The extreme reprojector to transverse mercator projection
+version=version 0.2
+tracker=https://github.com/kitzilla/qgis-transmerc-plugin/issues
+repository=https://github.com/kitzilla/qgis-transmerc-plugin
 ; end of mandatory metadata
 
-; experimental flag
+; start of optional metadata
+category=Vector
+changelog= 0.2 - Quick fix to work in QGIS 2.10 Pisa
+    0.1 - First release for QGIS 1.7
+
+tags=transverse mercator,reprojection,utm
+
+homepage=https://github.com/kitzilla/qgis-transmerc-plugin
+icon=TransMerc/transmerc_icon1.png
+
 experimental=True
+
+deprecated=False

@@ -20,7 +20,7 @@ from qgis.core import *
 from karney_gsl import TransverseMercatorExact
 from pointBox import pointBox
 from PyQt4.QtCore import QVariant
-from PyQt4.QtGui import QApplication, QDialog
+from PyQt4.QtGui import QApplication, QDialog, QMessageBox
 import sys
 import math
 
@@ -110,17 +110,22 @@ class transform2GaussKruger():
     self.TrvMercator = TransverseMercatorExact(6378137.0, 6356752.314140, self.lon0, self.scale, False)
     self.bLon = math.degrees((1.0 - self.TrvMercator.e) * math.pi*0.5)
     self.provider = self.layer.dataProvider()
-    self.epsg = self.provider.crs().epsg()
+    self.epsg = self.provider.crs().authid()
+    # QMessageBox.information(None, "DEBUG:", str(self.epsg)) 
     
-    CRS1 = QgsCoordinateReferenceSystem(self.epsg)
-    CRS2 = QgsCoordinateReferenceSystem(4326)
+    CRS1 = QgsCoordinateReferenceSystem()
+    CRS1.createFromString(self.epsg)
+    CRS2 = QgsCoordinateReferenceSystem()
+    CRS2.createFromString('EPSG:4326')
+    # CRS2 = QgsCoordinateReferenceSystem(4326)
     self.xform = QgsCoordinateTransform(CRS1, CRS2)
     
     ft = QgsFeature()
-    self.allAttribs = self.provider.attributeIndexes()
-    self.provider.select(self.allAttribs)
+    # self.allAttribs = self.provider.attributeIndexes()
+    # self.provider.select(self.allAttribs)
+    feats = self.provider.getFeatures()
     self.vNum = 0
-    while self.provider.nextFeature(ft):
+    while feats.nextFeature(ft):  # self.provider.nextFeature(ft):
       geom = ft.geometry()
       self.vNum += self.countVertices(geom)
     self.transformedPoints = 0
@@ -132,7 +137,8 @@ class transform2GaussKruger():
   def transformVLayerToGK(self):
     provider = self.provider  
     feat = QgsFeature()
-    self.provider.select(self.allAttribs)
+    # self.provider.select(self.allAttribs)
+    feats = self.provider.getFeatures()
   
     fields = self.provider.fields()
     writer = QgsVectorFileWriter(self.saveFilePath, "CP1250", fields, self.WKBType, None, self.fDriver)
@@ -140,9 +146,9 @@ class transform2GaussKruger():
     if writer.hasError() != QgsVectorFileWriter.NoError:
       print "Error when creating shapefile: ", writer.hasError()
   
-    while self.provider.nextFeature(feat):
+    while feats.nextFeature(feat): # self.provider.nextFeature(feat):
       geom = feat.geometry()
-      attr = feat.attributeMap()
+      attr = feat.attributes()
       pb = pointBox(geom)
       self.transformGeomToWGS84(pb)
       
@@ -162,7 +168,7 @@ class transform2GaussKruger():
       fet = QgsFeature()
       fet.setGeometry(pb.toQGSGeometry())
 
-      fet.setAttributeMap(attr)
+      fet.setAttributes(attr)
       writer.addFeature(fet)
       
     del writer
@@ -425,7 +431,7 @@ class transform2GaussKruger():
   Transforms each point in the given pointBox to WGS84 lat/lon point
   '''
   def transformGeomToWGS84(self, pointbox):
-    if self.epsg != 4326:
+    if self.epsg != 'EPSG:4326':
       for lv2 in pointbox.vector:
         for lv1 in lv2:
           for i in range(len(lv1)):

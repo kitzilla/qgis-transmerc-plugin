@@ -33,23 +33,36 @@ class gkPluginInterface:
       # Save reference to the QGIS interface
       self.iface = iface
       self.canvas = iface.mapCanvas()
-      self.curDir = QString(os.getenv('USERPROFILE') + "\\My Documents")
+      self.curDir = "%s%s" % (os.getenv('USERPROFILE'), "\\Documents")
       self.fileDiag = QFileDialog()
     
   
   def debugMsg(self, msg):
-    QMessageBox.information(self.iface.mainWindow(), "Message", QString(str(msg)))
+    QMessageBox.information(self.iface.mainWindow(), "Message", u"%s" % msg)
 
   def initGui(self):
-      # Create action that will start plugin
-      self.action = QAction(QIcon(":/transmerc_icon2.png"), "TransMerc", self.iface.mainWindow())
+      # # Create action that will start plugin
+      # self.action = QAction(QIcon(":/transmerc_icon2.png"), "TransMerc", self.iface.mainWindow())
       
-      # connect the action to the run method
-      QObject.connect(self.action, SIGNAL("triggered()"), self.run)
+      # # connect the action to the run method
+      # QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
-      # Add toolbar button and menu item
-      self.iface.addPluginToMenu("&TransMerc", self.action)
-      
+      # # Add toolbar button and menu item
+      # self.iface.addPluginToMenu("&TransMerc", self.action)
+    self.action = QAction(QIcon(":/transmerc_icon2.png"), "TransMerc", self.iface.mainWindow())
+    self.action.setObjectName("transMerc")
+    self.action.setWhatsThis("Extreme Reprojector to Transverse Mercator")
+    QObject.connect(self.action, SIGNAL("triggered()"), self.run)
+
+    # add toolbar button and menu item
+    self.iface.addToolBarIcon(self.action)
+    self.iface.addPluginToMenu("Reprojection", self.action)
+
+    # connect to signal renderComplete which is emitted when canvas
+    # rendering is done
+    # QObject.connect(self.iface.mapCanvas(), SIGNAL("renderComplete(QPainter *)"), self.renderTest)
+	  
+	  
 
   def unload(self):
       # Remove the plugin menu item and icon
@@ -92,18 +105,18 @@ class gkPluginInterface:
     for (key, layer) in layers.iteritems():
       if layer.isValid() and layer.type() == 0:
         flag = True
-        if layer.dataProvider().crs().epsg() == 0:
+        if not layer.dataProvider().crs().authid():
           bbx = layer.extent()
           if bbx.xMaximum() > 180.0 or bbx.xMinimum() < -180.0 or \
              bbx.yMaximum() >  90.0 or bbx.yMinimum() <  -90.0:
             flag = False
         if flag:    
-          self.win.ui.selectQGisLayer.addItem(layer.name(), QVariant(layer.getLayerID()))
+          self.win.ui.selectQGisLayer.addItem(layer.name(), layer.id())
   
   def getSelectedLayer(self):
     if self.win.ui.selectQGisLayer.count() > 0:
       i = self.win.ui.selectQGisLayer.currentIndex()
-      layerID = self.win.ui.selectQGisLayer.itemData(i).toString()
+      layerID = self.win.ui.selectQGisLayer.itemData(i)
       return QgsMapLayerRegistry.instance().mapLayer(layerID)
     else:
       return None
@@ -112,7 +125,7 @@ class gkPluginInterface:
     layer = self.getSelectedLayer()
     if layer != None:
       crs = layer.dataProvider().crs()
-      if crs.epsg() > 0:
+      if crs.authid():
         html = crackWKT(str(crs.toWkt())).exportDescription()
       else:
         html = '''
@@ -124,7 +137,7 @@ class gkPluginInterface:
       html = '<span style="color: red">There are no valid vector layers opened in this project!</span>'
     self.win.ui.layerProjectionDisplay.clear()
     qc = QTextCursor()
-    self.win.ui.layerProjectionDisplay.appendHtml(QString(html))
+    self.win.ui.layerProjectionDisplay.appendHtml(html)
     self.win.ui.layerProjectionDisplay.moveCursor(qc.Start)
     self.win.ui.layerProjectionDisplay.ensureCursorVisible()
   
